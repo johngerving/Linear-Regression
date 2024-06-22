@@ -15,6 +15,9 @@ class LinearRegression():
         # m is number of rows, n is number of columns
         m, n = A.shape
 
+        if m + 1 != n:
+            raise Exception(f"Matrix with shape ({m}, {n}) is not a square system.")
+
         h = 0 # Pivot row
         k = 0 # Pivot column
 
