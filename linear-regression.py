@@ -3,7 +3,7 @@ import pandas as pd
 
 class LinearRegression():
     def __init__(self):
-        self.coef = None
+        self.coeff = None
 
     '''
     function gaussianElimination:
@@ -114,19 +114,28 @@ class LinearRegression():
         # Solve system for coefficients
         self.coeff = self.gaussianElimination(matrix)[:, -1].flatten()
 
+    def predict(self, X):
+        if isinstance(X, (int, float, complex)) and not isinstance(X, bool) and self.coeff.size == 2:
+            return self.coeff[0] + self.coeff[1] * X
+        elif isinstance(X, pd.DataFrame):
+            X = X.to_numpy(copy=True).astype(np.float64)
+
+        if X.shape[1] != self.coeff.size - 1:
+            raise Exception("Shape of input must match number of coefficients")
+        
+        output = np.zeros(shape=(X.shape[0],))
+        for i in range(output.size):
+            output[i] += self.coeff[0]
+            for coeff in range(1, self.coeff.size):
+                output[i] += self.coeff[coeff] * X[i, coeff-1]
+                
+        return output
+
 linreg = LinearRegression()
 
 data = pd.read_csv("train.csv")
 
-# linreg.fit(data['x'], data['y'])
-
-X = np.array([[18, 52],
-              [24, 40],
-              [12, 40],
-              [30, 48],
-              [30, 32],
-              [22, 16]])
-y = np.array([144, 142, 124, 64, 96, 92])
+X = data['x']
+y = data['y']
 
 linreg.fit(X, y)
-print(linreg.coeff)
