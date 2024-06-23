@@ -1,6 +1,9 @@
 import numpy as np
+import pandas as pd
 
 class LinearRegression():
+    def __init__(self):
+        self.coef = None
 
     '''
     function gaussianElimination:
@@ -54,12 +57,76 @@ class LinearRegression():
             i += 1
         
         return A
+    
+    def fit(self, X, y):
+        # Convert X and y to Numpy arrays if necessary
+        if isinstance(X, pd.DataFrame) or isinstance(X, pd.Series):
+            X = X.to_numpy(copy=True).astype(np.float64)
+        else:
+            X = np.copy(X).astype(np.float64)
+        if isinstance(y, pd.DataFrame) or isinstance(y, pd.Series):
+            y = y.to_numpy(copy=True).astype(np.float64)
+        else:
+            y = np.copy(y).astype(np.float64)
+
+        X_shape = X.shape
+        y_shape = y.shape
+        
+        if X_shape[0] != y_shape[0]:
+            raise Exception('Number of instances of independent and dependent variables must match')
+        if y.ndim != 1:
+            raise Exception('Dependent variable must be 1-dimensional')
+
+        # Reshape X into columns if there is only one regressor
+        if(X.ndim == 1):
+            X = np.reshape(X, (X_shape[0], 1))
+        y = np.reshape(y, (y_shape[0], 1))
+
+        X = X[~np.isnan(X).any(axis=1)]
+        y = y[~np.isnan(X).any(axis=1)]
+        X = X[~np.isnan(y).any(axis=1)]
+        y = y[~np.isnan(y).any(axis=1)]
+
+        num_regressors = X.shape[1] # Number of independent variables
+        num_instances = X.shape[0] # Number of data points
+
+        # Create matrix to solve for coefficients
+        num_matrix_rows = num_regressors + 1
+        num_matrix_cols = num_regressors + 2
+
+        matrix = np.zeros(shape=(num_matrix_rows, num_matrix_cols))
+        for i in range(num_matrix_rows):
+            for j in range(num_matrix_cols - 1):
+                if i == 0 and j == 0: # Upper left corner of matrix
+                    matrix[i, j] = num_instances
+                elif i == 0 and j > 0: # First row of matrix
+                    matrix[i, j] = np.sum(X[:, j - 1])
+                elif j == 0 and i > 0: # First column of matrix
+                    matrix[i, j] = np.sum(X[:, i - 1])
+                else: # Everything else
+                    matrix[i, j] = np.sum(X[:, i - 1] * X[:, j - 1])
+        
+        # Populate last column of matrix representing output of linear equations
+        matrix[0, -1] = np.sum(y)
+        for i in range(1, num_matrix_rows):
+            matrix[i, -1] = np.sum(X[:, i - 1] * y[:, 0])
+
+        # Solve system for coefficients
+        self.coeff = self.gaussianElimination(matrix)[:, -1].flatten()
 
 linreg = LinearRegression()
 
-matrix = np.array([[6, 136, 228, 662],
-                   [136, 3328, 5128, 14312],
-                   [228, 5128, 9488, 25744]])
+data = pd.read_csv("train.csv")
 
-newMatrix = linreg.gaussianElimination(matrix)
-print(newMatrix)
+# linreg.fit(data['x'], data['y'])
+
+X = np.array([[18, 52],
+              [24, 40],
+              [12, 40],
+              [30, 48],
+              [30, 32],
+              [22, 16]])
+y = np.array([144, 142, 124, 64, 96, 92])
+
+linreg.fit(X, y)
+print(linreg.coeff)
