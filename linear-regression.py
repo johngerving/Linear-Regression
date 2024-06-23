@@ -136,8 +136,12 @@ class LinearRegression():
         # If only one regressor, allow single value to be passed in
         if isinstance(X, (int, float, complex)) and not isinstance(X, bool) and self.coeff.size == 2:
             return self.coeff[0] + self.coeff[1] * X
-        elif isinstance(X, pd.DataFrame):
+        elif isinstance(X, pd.DataFrame) or isinstance(X, pd.Series):
             X = X.to_numpy(copy=True).astype(np.float64)
+
+        X_shape = X.shape
+        if(X.ndim == 1):
+            X = np.reshape(X, (X_shape[0], 1))
 
         # If shape of input and coefficients do not match
         if X.shape[1] != self.coeff.size - 1:
@@ -151,6 +155,49 @@ class LinearRegression():
                 output[i] += self.coeff[coeff] * X[i, coeff-1]
                 
         return output
+    
+    def squaredResiduals(self, y_pred, y_actual):
+        if self.coeff is None:
+            raise Exception("Model has not been fit")
+        if(len(y_pred) != len(y_actual)):
+            raise Exception("Number of instances of predicted and actual do not match")
+        if isinstance(y_actual, pd.Series):
+            y_actual = y_actual.to_numpy(copy=True).astype(np.float64)
+        y_pred = np.copy(y_pred)
+
+        # Remove NaNs
+        y_pred = y_pred[~np.isnan(y_pred)]
+        y_actual = y_actual[~np.isnan(y_pred)]
+        y_pred = y_pred[~np.isnan(y)]
+        y_actual = y_actual[~np.isnan(y_actual)]
+
+        # Return sum of squares of difference between actual value and predicted value
+        squaredResiduals = np.sum(np.square(y_actual - y_pred))
+
+        return squaredResiduals
+
+    def totalSumOfSquares(self, y):
+        if self.coeff is None:
+            raise Exception("Model has not been fit")
+        if isinstance(y, pd.Series):
+            y = y.to_numpy(copy=True).astype(np.float64)
+
+        # Remove NaNs
+        y = y[~np.isnan(y)]
+
+        mean = np.mean(y)
+
+        # Return sum of squares of difference between value and mean value
+        totalSumOfSquares = np.sum(np.square(y - mean))
+        return totalSumOfSquares
+    
+    '''
+    R^2 represents the variation in the data that can be explained by the relationship between the independent and dependent variables.
+    '''
+    def r_squared(self, y_pred, y_actual):
+        # Return ratio between sum of squared residuals and sum of squares subtracted from 1
+        return 1 - self.squaredResiduals(y_pred, y_actual) / self.totalSumOfSquares(y_actual)
+
 
 linreg = LinearRegression()
 
@@ -160,3 +207,5 @@ X = data['x']
 y = data['y']
 
 linreg.fit(X, y)
+y_pred = linreg.predict(X)
+print(linreg.r_squared(y_pred, y))
