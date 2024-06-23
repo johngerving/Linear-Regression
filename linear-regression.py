@@ -115,14 +115,20 @@ class LinearRegression():
         self.coeff = self.gaussianElimination(matrix)[:, -1].flatten()
 
     def predict(self, X):
+        if self.coeff is None:
+            raise Exception("Model has not been fit")
+        
+        # If only one regressor, allow single value to be passed in
         if isinstance(X, (int, float, complex)) and not isinstance(X, bool) and self.coeff.size == 2:
             return self.coeff[0] + self.coeff[1] * X
         elif isinstance(X, pd.DataFrame):
             X = X.to_numpy(copy=True).astype(np.float64)
 
+        # If shape of input and coefficients do not match
         if X.shape[1] != self.coeff.size - 1:
             raise Exception("Shape of input must match number of coefficients")
         
+        # For each regressor, multiply by the input variable and add to output
         output = np.zeros(shape=(X.shape[0],))
         for i in range(output.size):
             output[i] += self.coeff[0]
