@@ -58,6 +58,14 @@ class LinearRegression():
         
         return A
     
+    '''
+    function fit:
+        arguments:
+            X - input array or dataframe
+            y - output array
+        post:
+            Fills self.coeff with coefficients for linear regression
+    '''
     def fit(self, X, y):
         # Convert X and y to Numpy arrays if necessary
         if isinstance(X, pd.DataFrame) or isinstance(X, pd.Series):
@@ -114,6 +122,13 @@ class LinearRegression():
         # Solve system for coefficients
         self.coeff = self.gaussianElimination(matrix)[:, -1].flatten()
 
+    '''
+    function predict:
+        arguments: 
+            X - number, Numpy array, or Pandas dataframe; if array or dataframe, each row contains an instance to be predicted
+        return:
+            output - an array containing an output for each instance in X
+    '''
     def predict(self, X):
         if self.coeff is None:
             raise Exception("Model has not been fit")
