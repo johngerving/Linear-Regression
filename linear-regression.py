@@ -224,18 +224,3 @@ class LinearRegression():
         rootMeanSquaredError = np.sqrt(meanSquaredError)
 
         return rootMeanSquaredError
-
-
-linreg = LinearRegression()
-
-data = pd.read_csv("train.csv")
-
-data = data.dropna()
-
-X = data['x']
-y = data['y']
-
-linreg.fit(X, y)
-y_pred = linreg.predict(X)
-print("R^2:", linreg.r_squared(y_pred, y))
-print("RMSE:", linreg.RMSE(y_pred, y))
