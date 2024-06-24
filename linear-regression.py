@@ -168,7 +168,7 @@ class LinearRegression():
         # Remove NaNs
         y_pred = y_pred[~np.isnan(y_pred)]
         y_actual = y_actual[~np.isnan(y_pred)]
-        y_pred = y_pred[~np.isnan(y)]
+        y_pred = y_pred[~np.isnan(y_actual)]
         y_actual = y_actual[~np.isnan(y_actual)]
 
         # Return sum of squares of difference between actual value and predicted value
@@ -197,15 +197,45 @@ class LinearRegression():
     def r_squared(self, y_pred, y_actual):
         # Return ratio between sum of squared residuals and sum of squares subtracted from 1
         return 1 - self.squaredResiduals(y_pred, y_actual) / self.totalSumOfSquares(y_actual)
+    
+    '''
+    Root Mean Squared Error
+    '''
+    def RMSE(self, y_pred, y_actual):
+        if self.coeff is None:
+            raise Exception("Model has not been fit")
+        if(len(y_pred) != len(y_actual)):
+            raise Exception("Number of instances of predicted and actual do not match")
+        if isinstance(y_actual, pd.Series):
+            y_actual = y_actual.to_numpy(copy=True).astype(np.float64)
+        y_pred = np.copy(y_pred)
+
+        # Remove NaNs
+        y_pred = y_pred[~np.isnan(y_pred)]
+        y_actual = y_actual[~np.isnan(y_pred)]
+        y_pred = y_pred[~np.isnan(y_actual)]
+        y_actual = y_actual[~np.isnan(y_actual)]
+
+        n = y_actual.size
+
+        # Calculate sum of squared residuals and divide by number of data points, then take square root
+        sumSquaredResiduals = self.squaredResiduals(y_pred, y_actual)
+        meanSquaredError = sumSquaredResiduals / n
+        rootMeanSquaredError = np.sqrt(meanSquaredError)
+
+        return rootMeanSquaredError
 
 
 linreg = LinearRegression()
 
 data = pd.read_csv("train.csv")
 
+data = data.dropna()
+
 X = data['x']
 y = data['y']
 
 linreg.fit(X, y)
 y_pred = linreg.predict(X)
-print(linreg.r_squared(y_pred, y))
+print("R^2:", linreg.r_squared(y_pred, y))
+print("RMSE:", linreg.RMSE(y_pred, y))
